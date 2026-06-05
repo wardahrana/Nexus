@@ -27,22 +27,23 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);   // ✅ ADD — true start mein
+  const savedToken = localStorage.getItem('token');
+const savedUser = localStorage.getItem('user');
+const [isLoading, setIsLoading] = useState(!savedToken);
+const [token, setToken] = useState<string | null>(savedToken);
+const [user, setUser] = useState<User | null>(
+  savedUser && savedUser !== 'undefined' ? JSON.parse(savedUser) : null
+);
 
-  useEffect(() => {
+ useEffect(() => {
   try {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
-
-    // ✅ null check pehle karo
     if (savedToken && savedUser && savedUser !== 'undefined') {
       setToken(savedToken);
       setUser(JSON.parse(savedUser));
     }
   } catch {
-    // ✅ Corrupt data clear karo
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   } finally {

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
+import WalletPage from './pages/WalletPage';
 
 // Layouts
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -32,7 +33,11 @@ import { DealsPage } from './pages/deals/DealsPage';
 import { ChatPage } from './pages/chat/ChatPage';
 import MeetingPage from './pages/meetings/MeetingPage';
 import VideoCallPage from './pages/video/VideoCallPage';
-
+const ProtectedRoute = () => {
+  const token = localStorage.getItem('token');
+  if (!token) return <Navigate to="/login" replace />;
+  return <DashboardLayout />;
+};
 // ✅ Alag component — useAuth yahan chalega AuthProvider ke andar
 function AppRoutes() {
   const { isLoading } = useAuth();
@@ -51,13 +56,15 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       
-    <Route path="/dashboard" element={<DashboardLayout />}>
+   <Route path="/dashboard" element={<ProtectedRoute />}>
   <Route path="entrepreneur" element={<EntrepreneurDashboard />} />
   <Route path="investor" element={<InvestorDashboard />} />
-  <Route path="entrepreneur/profile" element={<EntrepreneurProfilePage />} />  {/* ✅ */}
-  <Route path="investor/profile" element={<InvestorProfilePage />} />   
+  <Route path="entrepreneur/profile" element={<EntrepreneurProfilePage />} />
+  <Route path="investor/profile" element={<InvestorProfilePage />} />
   <Route path="entrepreneur/documents" element={<DocumentsPage />} />
-  <Route path="investor/documents" element={<DocumentsPage />} />     
+  <Route path="investor/documents" element={<DocumentsPage />} />
+  <Route path="entrepreneur/wallet" element={<WalletPage />} />
+  <Route path="investor/wallet" element={<WalletPage />} />
 </Route>
       {/* Profile Routes */}
       <Route path="/profile" element={<DashboardLayout />}>
@@ -109,7 +116,7 @@ function AppRoutes() {
       
       {/* Redirects */}
       <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<div style={{padding: '50px', fontSize: '24px'}}>ROUTE NOT FOUND: {window.location.pathname}</div>} />
     </Routes>
   );
 }
