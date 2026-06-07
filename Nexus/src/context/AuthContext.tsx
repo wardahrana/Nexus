@@ -22,6 +22,7 @@ type AuthContextType = {
   register: (name: string, email: string, password: string, role: string) => Promise<void>;
   login: (email: string, password: string, role: User['role']) => Promise<void>;
   logout: () => void;
+  setUserFromOTP: (user: User, token: string) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -102,6 +103,10 @@ console.log('Token:', token);
     setToken(null);
     localStorage.clear();
   };
+  const setUserFromOTP = (userData: User, userToken: string) => {
+  setUser(userData);
+  setToken(userToken);
+};
 
   return (
     <AuthContext.Provider
@@ -112,7 +117,8 @@ console.log('Token:', token);
         isAuthenticated: !!user,
         isLoading,                // ✅ ADD
         register,
-        logout
+        logout,
+        setUserFromOTP,
       }}
     >
       {children}

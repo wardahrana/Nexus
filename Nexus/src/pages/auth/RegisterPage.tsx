@@ -5,60 +5,111 @@ import { useAuth } from '../../context/AuthContext';
 import { Input } from '../../components/ui/Input';
 import { UserRole } from '../../types';
 
+// ─── Validation Helper ────────────────────────────────────────────────────────
+interface FormErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
+const validateRegisterForm = (
+  name: string,
+  email: string,
+  password: string,
+  confirmPassword: string
+): FormErrors => {
+  const errors: FormErrors = {};
+
+  if (!name.trim()) {
+    errors.name = 'Name is required';
+  } else if (name.trim().length < 2) {
+    errors.name = 'Name must be at least 2 characters';
+  } else if (name.trim().length > 50) {
+    errors.name = 'Name must be under 50 characters';
+  }
+
+  if (!email.trim()) {
+    errors.email = 'Email is required';
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.email = 'Enter a valid email address';
+  }
+
+  if (!password) {
+    errors.password = 'Password is required';
+  } else if (password.length < 6) {
+    errors.password = 'Password must be at least 6 characters';
+  } else if (!/[A-Z]/.test(password)) {
+    errors.password = 'Password must contain at least one uppercase letter';
+  } else if (!/[0-9]/.test(password)) {
+    errors.password = 'Password must contain at least one number';
+  }
+
+  if (!confirmPassword) {
+    errors.confirmPassword = 'Please confirm your password';
+  } else if (password !== confirmPassword) {
+    errors.confirmPassword = 'Passwords do not match';
+  }
+
+  return errors;
+};
+
 export const RegisterPage: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>('entrepreneur');
-  const [isLoading, setIsLoading] = useState(false);  
+  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');        // ✅ ADD: yeh missing tha
-  
+  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
+
   const { register } = useAuth();
   const navigate = useNavigate();
-  
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError('');
 
-  if (password !== confirmPassword) {
-    setError('Passwords do not match');
-    return;
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
 
-  try {
-    setIsLoading(true);
-    console.log('1. Register calling...');
-
-    await register(name, email, password, role);
-
-    console.log('2. Register done!');
-    console.log('3. Role is:', role);
-
-    setMessage('Account created successfully 🎉');
-
-    setTimeout(() => {
-      setMessage('Redirecting to dashboard...');
-      console.log('4. Navigating to:', `/dashboard/${role}`);
-
-      setTimeout(() => {
-        navigate(`/dashboard/${role}`);  // ✅ Dynamic — role se path banta hai
-      }, 1000);
-
-    }, 1000);
-
-  } catch (error) {
-    if (error instanceof Error) {
-      setError(error.message);
-    } else {
-      setError('Something went wrong');
+    // ✅ Frontend validation
+    const errors = validateRegisterForm(name, email, password, confirmPassword);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
     }
-  } finally {
-    setIsLoading(false);
-  }
-};
-  
+    setFieldErrors({});
+
+    try {
+      setIsLoading(true);
+      await register(name, email, password, role);
+      setMessage('Account created successfully 🎉');
+      setTimeout(() => {
+        setMessage('Redirecting to dashboard...');
+        setTimeout(() => {
+          navigate(`/dashboard/${role}`);
+        }, 1000);
+      }, 1000);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Something went wrong');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Clear field error on change
+  const handleFieldChange = (field: keyof FormErrors, value: string, setter: (v: string) => void) => {
+    setter(value);
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -82,12 +133,13 @@ export const RegisterPage: React.FC = () => {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {error && (
             <div className="mb-4 bg-red-50 border border-red-500 text-red-700 px-4 py-3 rounded-md flex items-start">
-              <AlertCircle size={18} className="mr-2 mt-0.5" />
+              <AlertCircle size={18} className="mr-2 mt-0.5 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
-          
-          <form className="space-y-6" onSubmit={handleSubmit}>
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            {/* Role Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 I am registering as a
@@ -105,7 +157,6 @@ export const RegisterPage: React.FC = () => {
                   <Building2 size={18} className="mr-2" />
                   Entrepreneur
                 </button>
-                
                 <button
                   type="button"
                   className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
@@ -120,47 +171,80 @@ export const RegisterPage: React.FC = () => {
                 </button>
               </div>
             </div>
-            
-            <Input
-              label="Full name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              fullWidth
-              startAdornment={<User size={18} />}
-            />
-            
-            <Input
-              label="Email address"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              fullWidth
-              startAdornment={<Mail size={18} />}
-            />
-            
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              fullWidth
-              startAdornment={<Lock size={18} />}
-            />
-            
-            <Input
-              label="Confirm password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              fullWidth
-              startAdornment={<Lock size={18} />}
-            />
-            
+
+            {/* Name */}
+            <div>
+              <Input
+                label="Full name"
+                type="text"
+                value={name}
+                onChange={(e) => handleFieldChange('name', e.target.value, setName)}
+                fullWidth
+                startAdornment={<User size={18} />}
+              />
+              {fieldErrors.name && (
+                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle size={12} /> {fieldErrors.name}
+                </p>
+              )}
+            </div>
+
+            {/* Email */}
+            <div>
+              <Input
+                label="Email address"
+                type="email"
+                value={email}
+                onChange={(e) => handleFieldChange('email', e.target.value, setEmail)}
+                fullWidth
+                startAdornment={<Mail size={18} />}
+              />
+              {fieldErrors.email && (
+                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle size={12} /> {fieldErrors.email}
+                </p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div>
+              <Input
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => handleFieldChange('password', e.target.value, setPassword)}
+                fullWidth
+                startAdornment={<Lock size={18} />}
+              />
+              {fieldErrors.password ? (
+                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle size={12} /> {fieldErrors.password}
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-400">
+                  Min 6 chars, one uppercase letter, one number
+                </p>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <Input
+                label="Confirm password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => handleFieldChange('confirmPassword', e.target.value, setConfirmPassword)}
+                fullWidth
+                startAdornment={<Lock size={18} />}
+              />
+              {fieldErrors.confirmPassword && (
+                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle size={12} /> {fieldErrors.confirmPassword}
+                </p>
+              )}
+            </div>
+
+            {/* Terms */}
             <div className="flex items-center">
               <input
                 id="terms"
@@ -171,20 +255,14 @@ export const RegisterPage: React.FC = () => {
               />
               <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
                 I agree to the{' '}
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
-                  Terms of Service
-                </a>{' '}
-                and{' '}
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
-                  Privacy Policy
-                </a>
+                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">Terms of Service</a>
+                {' '}and{' '}
+                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">Privacy Policy</a>
               </label>
             </div>
 
             {message && (
-              <p className="text-center text-sm text-green-600 mb-2">
-                {message}
-              </p>
+              <p className="text-center text-sm text-green-600">{message}</p>
             )}
 
             <button
@@ -195,7 +273,7 @@ export const RegisterPage: React.FC = () => {
               {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
-          
+
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -205,7 +283,6 @@ export const RegisterPage: React.FC = () => {
                 <span className="px-2 bg-white text-gray-500">Or</span>
               </div>
             </div>
-            
             <div className="mt-2 text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}

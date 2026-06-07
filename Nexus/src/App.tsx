@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import WalletPage from './pages/WalletPage';
+import { OTPPage } from './pages/auth/OTPPage';
 
 // Layouts
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -9,6 +10,7 @@ import { DashboardLayout } from './components/layout/DashboardLayout';
 // Auth Pages
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
+
 
 // Dashboard Pages
 import { EntrepreneurDashboard } from './pages/dashboard/EntrepreneurDashboard';
@@ -35,7 +37,21 @@ import MeetingPage from './pages/meetings/MeetingPage';
 import VideoCallPage from './pages/video/VideoCallPage';
 const ProtectedRoute = () => {
   const token = localStorage.getItem('token');
+  const savedUser = localStorage.getItem('user');
+
   if (!token) return <Navigate to="/login" replace />;
+
+  // Role-based check
+  const user = savedUser ? JSON.parse(savedUser) : null;
+  const path = window.location.pathname;
+
+  if (user && path.includes('/dashboard/entrepreneur') && user.role !== 'entrepreneur') {
+    return <Navigate to={`/dashboard/${user.role}`} replace />;
+  }
+  if (user && path.includes('/dashboard/investor') && user.role !== 'investor') {
+    return <Navigate to={`/dashboard/${user.role}`} replace />;
+  }
+
   return <DashboardLayout />;
 };
 // ✅ Alag component — useAuth yahan chalega AuthProvider ke andar
@@ -55,8 +71,9 @@ function AppRoutes() {
       {/* Authentication Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify-otp" element={<OTPPage />} />
       
-   <Route path="/dashboard" element={<ProtectedRoute />}>
+  <Route path="/dashboard" element={<ProtectedRoute />}>
   <Route path="entrepreneur" element={<EntrepreneurDashboard />} />
   <Route path="investor" element={<InvestorDashboard />} />
   <Route path="entrepreneur/profile" element={<EntrepreneurProfilePage />} />
