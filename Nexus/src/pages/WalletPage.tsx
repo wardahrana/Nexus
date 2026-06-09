@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import {
@@ -7,6 +8,7 @@ import {
   withdrawFunds,
   transferFunds,
   createPaymentIntent,
+  depositFunds,
   searchEntrepreneurs,
 } from '../services/transactionAPI';
 import { useAuth } from '../context/AuthContext';
@@ -59,7 +61,9 @@ const DepositForm = ({ onSuccess }: { onSuccess: () => void }) => {
       if (error) {
         setMessage(error.message || 'Payment failed');
       } else if (paymentIntent?.status === 'succeeded') {
-        setMessage('✅ Deposit successful! Balance will update shortly.');
+  await import('../services/transactionAPI').then(({ depositFunds }) => 
+    depositFunds(amt, 'Wallet deposit via Stripe')
+  );       setMessage('✅ Deposit successful! Balance will update shortly.');
         setAmount('');
         setTimeout(onSuccess, 2000);
       }
