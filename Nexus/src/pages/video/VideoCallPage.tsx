@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
-
+import { API_BASE_URL, API_URL } from '../../config/api';
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -34,7 +34,8 @@ export default function VideoCallPage() {
   const [error, setError] = useState<string | null>(null);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [remoteAudioEnabled, setRemoteAudioEnabled] = useState(true);
-  const [peerLeft, setPeerLeft] = useState(false);
+
+  const [, setPeerLeft] = useState(false);
 
   // ✅ 3. createPeerConnection
   const createPeerConnection = useCallback((stream: MediaStream): RTCPeerConnectionWithPeerId => {
@@ -66,7 +67,7 @@ export default function VideoCallPage() {
     const verifyMeeting = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`http://localhost:5000/api/meetings/${meetingId}`, {
+        const res = await fetch(`${API_URL}/meetings/${meetingId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -132,7 +133,7 @@ export default function VideoCallPage() {
           localVideoRef.current.srcObject = stream;
         }
 
-        const socket = io('http://localhost:5000', { withCredentials: true });
+        const socket = io(`${API_BASE_URL}`, { withCredentials: true });
         socketRef.current = socket;
 
         socket.on('connect', () => {

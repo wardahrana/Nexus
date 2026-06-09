@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-
+import { API_URL } from '../../config/api';
 interface SocialLinks {
   linkedin?: string;
   twitter?: string;
@@ -83,7 +83,7 @@ export const EntrepreneurProfilePage: React.FC = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem('token');
-        const { data } = await axios.get('http://localhost:5000/api/profile/me', {
+        const { data } = await axios.get(`${API_URL}/profile/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProfile(data.data);
@@ -130,7 +130,7 @@ export const EntrepreneurProfilePage: React.FC = () => {
         ...form,
         fundingNeeded: Number(form.fundingNeeded) || 0,
       };
-      const { data } = await axios.put('http://localhost:5000/api/profile/me', payload, {
+      const { data } = await axios.put(`${API_URL}/profile/me`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProfile(data.data);

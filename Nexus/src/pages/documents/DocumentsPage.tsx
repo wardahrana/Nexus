@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FileText, Upload, Share2, Trash2, Eye, CheckCircle } from 'lucide-react';
 import { getMyDocuments, uploadDocument, deleteDocument } from '../../services/documentAPI';
 import SignaturePad from '../../components/documents/SignaturePad';
+import { API_BASE_URL } from '../../config/api';
 
 interface Document {
   _id: string;
@@ -81,7 +82,7 @@ export default function DocumentsPage() {
 
   const handlePreview = (doc: Document) => {
     setPreviewDoc(doc);
-    setPreviewUrl(`http://localhost:5000${doc.fileUrl}`);
+    setPreviewUrl(`${API_BASE_URL}${doc.fileUrl}`);
   };
 
   const handleDrop = (e: React.DragEvent) => {

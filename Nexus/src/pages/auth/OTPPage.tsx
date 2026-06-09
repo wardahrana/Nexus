@@ -4,7 +4,8 @@ import { AlertCircle, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
-const API = axios.create({ baseURL: 'http://localhost:5000/api' });
+import { API_URL } from '../../config/api';
+const API = axios.create({ baseURL: API_URL });
 
 export const OTPPage: React.FC = () => {
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
